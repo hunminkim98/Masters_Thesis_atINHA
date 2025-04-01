@@ -1,0 +1,3 @@
+"""
+StatisticalAnalysis package
+""" 
