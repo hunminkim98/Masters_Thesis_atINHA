@@ -373,6 +373,13 @@ def mixed_anova_interaction_plot(data, dv, between, within, subject,
     # Define time point order
     time_order = ['Pre', 'Post1', 'Post2']
     
+    # Define mapping for display labels
+    time_labels = {
+        'Pre': 'Initial assessment',
+        'Post1': 'Post-feedback',
+        'Post2': 'A week later'
+    }
+    
     for i, group in enumerate(groups):
         group_data = grouped[grouped[between] == group].copy()
         
@@ -382,6 +389,9 @@ def mixed_anova_interaction_plot(data, dv, between, within, subject,
             time_map = {tp: idx for idx, tp in enumerate(time_order)}
             group_data['time_order'] = group_data[within].map(time_map)
             group_data = group_data.sort_values('time_order')
+            
+            # Replace time labels for display
+            group_data[within] = group_data[within].map(time_labels)
         
         # Extract yerr for just this group
         yerr = None if err_column is None else group_data[err_column].values
@@ -409,7 +419,7 @@ def mixed_anova_interaction_plot(data, dv, between, within, subject,
     # Set correct order for x-axis ticks if they match expected time points
     if hasattr(plt.gca(), 'set_xticks') and all(tp in time_order for tp in plt.gca().get_xticks()):
         plt.gca().set_xticks(range(len(time_order)))
-        plt.gca().set_xticklabels(time_order)
+        plt.gca().set_xticklabels([time_labels[tp] for tp in time_order])
     
     # Add p-values annotations if requested and results provided
     if show_p_values and aov_results is not None:
@@ -427,7 +437,9 @@ def mixed_anova_interaction_plot(data, dv, between, within, subject,
             def format_p_with_stars(p):
                 if np.isnan(p):
                     return "p = N/A"
-                p_formatted = f"p = {p:.4f}"
+                # Truncate to 3 decimal places instead of rounding
+                p_truncated = int(p * 1000) / 1000
+                p_formatted = f"p = {p_truncated:.3f}"
                 if p < 0.001:
                     return p_formatted + " ***"
                 elif p < 0.01:
@@ -445,26 +457,46 @@ def mixed_anova_interaction_plot(data, dv, between, within, subject,
             # Add text box with p-values
             plt.annotate(ann_text, xy=(0.02, 0.98), xycoords='axes fraction', 
                         va='top', ha='left', fontsize=10,
-                        bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8))
+                        bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.7))
         except Exception as e:
             print(f"Could not add p-values: {e}")
     
     # Set title and labels
     if title:
-        plt.title(title, fontsize=14, fontweight='bold')
+        plt.title(title, fontsize=12, fontweight='normal')
     else:
-        plt.title(f'Interaction Plot: {between} × {within}', fontsize=14, fontweight='bold')
+        # plt.title(f'Interaction Plot: {between} × {within}', fontsize=12, fontweight='normal')
+        plt.title("")
+        
+    plt.xlabel(within, fontsize=10)
+    plt.ylabel('10-meter Record', fontsize=10)
     
-    plt.xlabel(within, fontsize=12)
-    plt.ylabel(dv, fontsize=12)
+    # Adjust sequence of the between
     
     # Add legend, grid, and styling
-    plt.legend(title=between, loc='best', frameon=True, framealpha=0.9)
+    # Change order of legend items to MAE, DI, Control
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = []
+    if 'MAE' in labels:
+        order.append(labels.index('MAE'))
+    if 'DI' in labels:
+        order.append(labels.index('DI'))
+    if 'Control' in labels:
+        order.append(labels.index('Control'))
+    
+    # Apply the new order if all expected labels were found
+    if len(order) == 3:  # If we found all three expected labels
+        plt.legend([handles[idx] for idx in order], 
+                  [labels[idx] for idx in order], 
+                  title=between, loc='upper right', frameon=True, framealpha=0.7, fontsize=8)
+    else:  # Fallback to default ordering
+        plt.legend(title=between, loc='upper right', frameon=True, framealpha=0.7, fontsize=8)
+    
     plt.grid(True, linestyle='--', alpha=0.7)
     
     # Add error bar type to y-axis label if error bars are shown
-    if err_column is not None:
-        plt.ylabel(f"{dv}\n(Error bars: {err_label})", fontsize=12)
+    # if err_column is not None:
+    #     plt.ylabel(f"{dv}\n(Error bars: {err_label})", fontsize=12)
     
     plt.tight_layout()
     plt.show()

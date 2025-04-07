@@ -135,6 +135,18 @@ print("\n" + "="*50 + "\nHomogeneity Test of All Groups:\n" + "="*50)
 stat, p = homogeneity_test(GroupA, GroupB, GroupC)
 print(f"Statistic: {stat}, p-value: {p}")
 
+# Homogeneity test of all groups at each time point
+print("\n" + "="*50 + "\nHomogeneity Test of All Groups at Each Time Point:\n" + "="*50)
+stat, p = homogeneity_test(pre_A, pre_B, pre_C)
+print(f"Statistic: {stat}, p-value: {p}")
+
+stat, p = homogeneity_test(post1_A, post1_B, post1_C)
+print(f"Statistic: {stat}, p-value: {p}")
+
+stat, p = homogeneity_test(post2_A, post2_B, post2_C)
+print(f"Statistic: {stat}, p-value: {p}")
+
+
 # Save the result
 output_path = "homogeneity_test_result.csv"
 homogeneity_test_result = pd.DataFrame({'Statistic': [stat], 'p-value': [p]})
@@ -156,15 +168,15 @@ print(f"Statistic: {stat}, p-value: {p}")
 # Combine pre-test data into a single DataFrame with a group identifier
 # Create DataFrame directly from pre_A, then assign columns
 df_pre_A = pd.DataFrame(pre_A)
-df_pre_A.columns = ['Score'] 
+df_pre_A.columns = ['10-meter Record'] 
 df_pre_A['Group'] = 'MAE'
 
 df_pre_B = pd.DataFrame(pre_B)
-df_pre_B.columns = ['Score']
+df_pre_B.columns = ['10-meter Record']
 df_pre_B['Group'] = 'DI'
 
 df_pre_C = pd.DataFrame(pre_C)
-df_pre_C.columns = ['Score']
+df_pre_C.columns = ['10-meter Record']
 df_pre_C['Group'] = 'Control'
 
 combined_pre_data = pd.concat([df_pre_A, df_pre_B, df_pre_C], ignore_index=True)
@@ -175,7 +187,7 @@ print(f"Combined Pre-Data shape: {combined_pre_data.shape}")
 
 aov = pg.anova(
     data=combined_pre_data,
-    dv='Score',
+    dv='10-meter Record',
     between='Group',
     detailed=True,
     effsize='np2'
@@ -193,8 +205,8 @@ print(f"One way ANOVA result saved to {output_path}")
 anova_boxplot(
     dataframe=combined_pre_data,
     x_axis='Group',  # The grouping variable used in ANOVA
-    y_axis='Score',  # The dependent variable used in ANOVA
-    title='Baseline Score Distribution by Group', # A descriptive title
+    y_axis='10-meter Record',  # The dependent variable used in ANOVA
+    title='Initial assessment of 10-meter Record Distribution', # A descriptive title
     palette='Set3' # Optional: specify a color palette
 )
 
@@ -437,7 +449,7 @@ mixed_anova_interaction_plot(
     within='Time', 
     subject='UniqueID', 
     error_bars='sd',  # Standard Deviation
-    title='Changes in Score Over Time by Group',
+    title='',
     aov_results=aov  # ANOVA 결과 전달하여 p-값 표시
 )
 
